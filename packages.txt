@@ -1,0 +1,6 @@
+ffmpeg
+mediainfo
+megatools
+git
+curl
+p7zip-full

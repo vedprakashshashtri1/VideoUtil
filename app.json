@@ -1,0 +1,105 @@
+{
+  "name": "VideoUtil Bot",
+  "description": "Telegram video compression, cropping, splitting and merge bot",
+  "logo": "https://graph.org/file/47d25d9ba84e13d958d2d.jpg",
+  "keywords": [
+    "telegram",
+    "video",
+    "compress",
+    "ffmpeg",
+    "bot"
+  ],
+  "website": "https://t.me/NexonBots",
+  "repository": "https://github.com/PrimeSujoy/VideoUtil",
+  "stack": "container",
+  "env": {
+    "APP_ID": {
+      "description": "Get this value from https://my.telegram.org",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Get this value from https://my.telegram.org",
+      "required": true
+    },
+    "TG_BOT_TOKEN": {
+      "description": "Your bot token from @BotFather",
+      "required": true
+    },
+    "BOT_USERNAME": {
+      "description": "Bot username without the leading @",
+      "required": true
+    },
+    "AUTH_USERS": {
+      "description": "Space-separated Telegram user/chat IDs allowed to use admin commands",
+      "required": true
+    },
+    "LOG_CHANNEL": {
+      "description": "Log channel username (with @) or numeric chat ID",
+      "required": true
+    },
+    "DUMP_CHANNEL": {
+      "description": "Optional dump channel ID (-100...). Every finished upload is copied there. Empty = off",
+      "value": "",
+      "required": false
+    },
+    "DB_URL": {
+      "description": "MongoDB connection string (mongodb+srv://...)",
+      "required": true
+    },
+    "DB_NAME": {
+      "description": "MongoDB database name",
+      "value": "enc",
+      "required": true
+    },
+    "SESSION_NAME": {
+      "description": "Pyrogram session name",
+      "value": "AHCompressorBot",
+      "required": false
+    },
+    "UPDATES_CHANNEL": {
+      "description": "Updates channel username without @",
+      "value": "NexonBots",
+      "required": false
+    },
+    "UPSTREAM_REPO": {
+      "description": "Repository used by /update (owner/name or full URL)",
+      "value": "PrimeSujoy/VideoUtil",
+      "required": false
+    },
+    "GIT_TOKEN": {
+      "description": "GitHub PAT so /update can pull this private repository",
+      "required": false
+    },
+    "OWNER_ID": {
+      "description": "Optional bot owner Telegram ID (owner-only controls)",
+      "value": "0",
+      "required": false
+    },
+    "GDRIVE_CLIENT_ID": {
+      "description": "Optional Google Drive OAuth client ID (Google Cloud Desktop app client)",
+      "required": false
+    },
+    "GDRIVE_CLIENT_SECRET": {
+      "description": "Optional Google Drive OAuth client secret",
+      "required": false
+    },
+    "GDRIVE_PROJECT_ID": {
+      "description": "Optional Google Cloud project ID for the Drive OAuth client",
+      "required": false
+    },
+    "GDRIVE_REDIRECT_URI": {
+      "description": "OAuth loopback callback used for no-paste Drive connect",
+      "value": "http://localhost:8080/oauth2callback",
+      "required": false
+    },
+    "INDEX_URL": {
+      "description": "Optional public index page in front of your Drive folder",
+      "required": false
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  }
+}

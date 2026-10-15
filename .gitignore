@@ -1,0 +1,16 @@
+.streamlit/secrets.toml
+*.session
+*.session-journal
+Log.txt
+bot-streamlit.log
+downloads/
+__pycache__/
+*.py[cod]
+.venv/
+.venv311/
+.env
+*.env
+secrets.toml
+*.key
+*.pem
+bot_output.log

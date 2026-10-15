@@ -1,0 +1,17 @@
+.git
+.gitignore
+.streamlit/secrets.toml
+.env
+*.env
+secrets.toml
+*.session
+*.session-journal
+Log.txt
+__pycache__/
+*.py[cod]
+.venv/
+.venv311/
+downloads/
+bot-streamlit.log
+bot_output.log
+antigravity.txt

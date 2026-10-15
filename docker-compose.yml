@@ -1,0 +1,15 @@
+services:
+  bot:
+    build: .
+    env_file: .env
+    environment:
+      PORT: "7860"
+      WORK_DIR: /data
+    ports:
+      - "7860:7860"
+    volumes:
+      - video-util-data:/data
+    restart: unless-stopped
+
+volumes:
+  video-util-data:
