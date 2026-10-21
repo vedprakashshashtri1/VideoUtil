@@ -55,10 +55,6 @@ class Config(object):
     GDRIVE_UPLOAD_FOLDER = get_config("GDRIVE_UPLOAD_FOLDER", "")
     GDRIVE_INDEX_PREFIX = get_config("GDRIVE_INDEX_PREFIX", "")
 
-    # Auto-delete non-owner Drive uploads after N days (0 = keep forever).
-    # Owner uploads are never tagged, so they are never touched.
-    GDRIVE_UPLOAD_TTL_DAYS = int(get_config("GDRIVE_UPLOAD_TTL_DAYS", "3"))
-
     DB_NAME = get_config("DB_NAME", "enc")
 
     DB_URL = get_config("DB_URL", "")

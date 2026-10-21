@@ -267,8 +267,6 @@ if __name__ == "__main__" :
     async def start_tasks():
         await load_encoding_settings()
         asyncio.create_task(expired_user_cleaner())
-        from bot.helper_funcs.gdrive import gdrive_upload_sweeper
-        asyncio.create_task(gdrive_upload_sweeper())
         from bot.helper_funcs.telegram_transport import wzgram_update_checker_loop
         asyncio.create_task(wzgram_update_checker_loop(app))
         asyncio.create_task(_notify_restarted())

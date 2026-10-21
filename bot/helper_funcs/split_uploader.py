@@ -988,14 +988,6 @@ async def _drive_upload_dispatch(bot_client, dest_chat_id, reply_to, file_path, 
             pass
         return False
     folder_id = await gdrive_mod.resolve_upload_folder(uid, drive_uid)
-    # Non-owner uploads expire after GDRIVE_UPLOAD_TTL_DAYS (0 = off).
-    # Owner uploads stay forever - the sweeper only sees tagged files.
-    ttl_days = int(getattr(Config, "GDRIVE_UPLOAD_TTL_DAYS", 0) or 0)
-    expire_seconds = (
-        ttl_days * 86400
-        if ttl_days > 0 and uid != int(getattr(Config, "OWNER_ID", 0) or 0)
-        else 0
-    )
     try:
         result = await gdrive_mod.drive_upload_file(
             drive_uid,
@@ -1003,7 +995,6 @@ async def _drive_upload_dispatch(bot_client, dest_chat_id, reply_to, file_path, 
             progress_cb=progress_cb,
             folder_id=folder_id,
             cancel_check=(lambda: task_manager.is_cancelled(task_id)) if task_id else None,
-            expire_seconds=expire_seconds,
         )
     except gdrive_mod.UploadCancelled:
         if task_id:
@@ -1046,18 +1037,12 @@ async def _drive_upload_dispatch(bot_client, dest_chat_id, reply_to, file_path, 
         buttons.append([InlineKeyboardButton("▶ View", url=f"{index_url}?a=view")])
     mime = result.get("mime") or "application/octet-stream"
     owner = html.escape(str(user_name or "User"))
-    expiry = ""
-    user_sep = "\u2514"
-    if expire_seconds:
-        days = max(1, round(expire_seconds / 86400))
-        expiry = f"\n\u2514 \u23f3 Auto-delete: {days} {'day' if days == 1 else 'days'}"
-        user_sep = "\u251c"
     text = (
         "✅ <b>Upload Complete!</b>\n"
         f"├ 📂 Name: <b><code>{html.escape(result['name'])}</code></b>\n"
         f"├ 💿 Size: <b>{humanbytes(size).replace(' ', '')}</b>\n"
         f"├ 📦 Type: <b>{html.escape(mime)}</b>\n"
-        f"{user_sep} 👤 User: <b><a href=\"tg://user?id={uid}\">{owner}</a></b>{expiry}"
+        f"└ 👤 User: <b><a href=\"tg://user?id={uid}\">{owner}</a></b>"
     )
     try:
         await safe_flood_call(

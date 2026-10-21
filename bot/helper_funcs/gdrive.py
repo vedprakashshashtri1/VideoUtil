@@ -972,12 +972,8 @@ async def resolve_upload_folder(requester_id, drive_uid):
     return own or env_folder
 
 
-async def drive_upload_file(drive_uid, file_path, progress_cb=None, folder_id="", cancel_check=None, expire_seconds=0):
-    """Resumable upload; returns {"id", "name", "mime"} and shares the file publicly.
-
-    expire_seconds > 0 tags the file with an appProperties exp epoch so the
-    background sweeper can auto-trash it later (owner uploads leave this 0).
-    """
+async def drive_upload_file(drive_uid, file_path, progress_cb=None, folder_id="", cancel_check=None):
+    """Resumable upload; returns {"id", "name", "mime"} and shares the file publicly."""
     tokens = await load_tokens(drive_uid)
     if not tokens:
         raise GDriveError("Google Drive is not connected.")
@@ -993,8 +989,6 @@ async def drive_upload_file(drive_uid, file_path, progress_cb=None, folder_id=""
     meta = {"name": name}
     if folder_id:
         meta["parents"] = [folder_id]
-    if expire_seconds and expire_seconds > 0:
-        meta["appProperties"] = {"exp": str(int(time.time()) + int(expire_seconds))}
 
     timeout = aiohttp.ClientTimeout(total=None, sock_connect=30, sock_read=180)
     async with aiohttp.ClientSession(
@@ -1100,92 +1094,3 @@ async def drive_upload_file(drive_uid, file_path, progress_cb=None, folder_id=""
         if progress_cb:
             await progress_cb(size, size)
         return {"id": file_id, "name": final.get("name") or name, "mime": mime}
-
-
-# ---------------- Auto-delete of expired user uploads ----------------
-# Files uploaded by non-owner users carry appProperties {"exp": "<epoch>"}.
-# Owner uploads are never tagged, so the sweeper can never touch them.
-
-async def _trash_expired_in_drive(uid, tokens):
-    """Trash tagged uploads whose exp epoch has passed on this drive."""
-    removed = 0
-    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
-    async with aiohttp.ClientSession(headers=headers) as session:
-        page_token = ""
-        while True:
-            params = {
-                "q": "appProperties has {key='exp'} and trashed = false",
-                "fields": "nextPageToken,files(id,name,appProperties)",
-                "pageSize": "100",
-                "spaces": "drive",
-            }
-            if page_token:
-                params["pageToken"] = page_token
-            async with session.get(f"{API_BASE}/files", params=params) as resp:
-                if resp.status != 200:
-                    LOGS.warning(
-                        "[GDriveSweep] list failed for uid %s: %s %s",
-                        uid, resp.status, (await resp.text())[:150],
-                    )
-                    return removed
-                data = await resp.json()
-            now = int(time.time())
-            for item in data.get("files", []):
-                props = item.get("appProperties") or {}
-                try:
-                    exp = int(props.get("exp") or 0)
-                except (TypeError, ValueError):
-                    continue
-                if not exp or exp >= now:
-                    continue
-                try:
-                    async with session.patch(
-                        f"{API_BASE}/files/{item['id']}",
-                        json={"trashed": True},
-                        params={"fields": "id"},
-                    ) as patch_resp:
-                        if patch_resp.status == 200:
-                            removed += 1
-                            LOGS.info(
-                                "[GDriveSweep] trashed expired upload %r (uid %s)",
-                                item.get("name"), uid,
-                            )
-                        else:
-                            LOGS.warning(
-                                "[GDriveSweep] trash failed %s for %r",
-                                patch_resp.status, item.get("name"),
-                            )
-                except Exception as e:
-                    LOGS.warning("[GDriveSweep] trash error for %r: %s", item.get("name"), e)
-            page_token = data.get("nextPageToken") or ""
-            if not page_token:
-                break
-    return removed
-
-
-async def sweep_expired_uploads():
-    """Sweep every connected Drive for expired user uploads. Returns count."""
-    from database import db as _db
-    total = 0
-    for uid in await _db.gdrive_connected_uids():
-        try:
-            tokens = await load_tokens(uid)
-            if not tokens:
-                continue
-            total += await _trash_expired_in_drive(uid, tokens)
-        except Exception as e:
-            LOGS.warning("[GDriveSweep] uid %s failed: %s", uid, e)
-    return total
-
-
-async def gdrive_upload_sweeper():
-    """Background loop: hourly sweep of expired user uploads (starts 10 min after boot)."""
-    await asyncio.sleep(600)
-    while True:
-        try:
-            removed = await sweep_expired_uploads()
-            if removed:
-                LOGS.info("[GDriveSweep] trashed %d expired upload(s)", removed)
-        except Exception as e:
-            LOGS.warning("[GDriveSweep] sweep failed: %s", e)
-        await asyncio.sleep(3600)
